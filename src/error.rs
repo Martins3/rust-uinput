@@ -43,23 +43,29 @@ impl From<udev::Error> for Error {
 }
 
 impl fmt::Display for Error {
-	fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
-		f.write_str(error::Error::description(self))
+	fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+		match self {
+			&Error::Nix(ref err) => write!(f, "{}", err),
+			&Error::Nul(ref err) => write!(f, "{}", err),
+			#[cfg(feature = "udev")]
+			&Error::Udev(ref err) => write!(f, "{}", err),
+			&Error::NotFound => write!(f, "Device not found."),
+		}
 	}
 }
 
 impl error::Error for Error {
 	fn description(&self) -> &str {
 		match self {
-			&Error::Nix(ref err) =>
-				err.description(),
+			&Error::Nix(_) =>
+				"System error (nix)",
 
-			&Error::Nul(ref err) =>
-				err.description(),
+			&Error::Nul(_) =>
+				"Null byte error",
 
 			#[cfg(feature = "udev")]
-			&Error::Udev(ref err) =>
-				err.description(),
+			&Error::Udev(_) =>
+				"Udev error",
 
 			&Error::NotFound =>
 				"Device not found.",

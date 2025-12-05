@@ -3,8 +3,9 @@ use libc::c_int;
 use libc::{timeval, gettimeofday};
 use nix::unistd;
 use ffi::*;
-use {Result as Res, event};
-use event::{Kind, Code};
+use crate::{Result as Res};
+use crate::event;
+use crate::event::{Kind, Code};
 
 /// The virtual device.
 pub struct Device {
@@ -34,7 +35,7 @@ impl Device {
 			let ptr  = &event as *const _ as *const u8;
 			let size = mem::size_of_val(&event);
 
-			try!(unistd::write(self.fd, slice::from_raw_parts(ptr, size)));
+			unistd::write(self.fd, slice::from_raw_parts(ptr, size))?;
 		}
 
 		Ok(())
@@ -63,8 +64,8 @@ impl Device {
 
 	/// Send a press and release event.
 	pub fn click<T: event::Press + event::Release>(&mut self, event: &T) -> Res<()> {
-		try!(self.press(event));
-		try!(self.release(event));
+		self.press(event)?;
+		self.release(event)?;
 
 		Ok(())
 	}
